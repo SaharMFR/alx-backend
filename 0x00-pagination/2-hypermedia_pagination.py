@@ -48,10 +48,11 @@ class Server:
     def get_hyper(self, page: int = 1, page_size: int = 10) -> Dict:
         """ Gets the hyper-page from `Popular_Baby_Names.csv` file """
         nPages = math.ceil(19418 / page_size)
+        dataset = self.get_page(page=page, page_size=page_size)
         return {
-            "page_size": page_size if page < nPages else 0,
+            "page_size": len(dataset),
             "page": page,
-            "data": self.get_page(page, page_size),
+            "data": dataset,
             "next_page": page + 1 if page + 1 <= nPages else None,
             "previous_page": page - 1 if page - 1 > 0 else None,
             "total_pages": nPages
