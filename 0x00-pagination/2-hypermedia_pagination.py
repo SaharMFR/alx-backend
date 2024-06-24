@@ -35,15 +35,7 @@ class Server:
         assert type(page) is int and type(page_size) is int
         assert page > 0 and page_size > 0
         indices = index_range(page, page_size)
-        data = []
-        with open('Popular_Baby_Names.csv', 'r') as csvFile:
-            csv_reader = csv.reader(csvFile)
-            i = -1
-            for row in csv_reader:
-                if indices[0] <= i < indices[1]:
-                    data.append(row)
-                i += 1
-        return data
+        return self.__dataset[indices[0]:indices[1]]
 
     def get_hyper(self, page: int = 1, page_size: int = 10) -> Dict:
         """ Gets the hyper-page from `Popular_Baby_Names.csv` file """
