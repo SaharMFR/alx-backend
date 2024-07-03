@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
-""" Basic Flask-Babel app """
-import re
-from flask import Flask, render_template, request, g
+'''
+    Use Babel to get user locale.
+'''
+
 from flask_babel import Babel
+from flask import Flask, render_template, request, g
+from typing import Union
 
-
-class Config:
-    """ Configurations for Flask-Babel app """
-    LANGUAGES = ["en", "fr"]
-
-
-app = Flask(__name__)
-app.config_class = Config
-app.config['LANGUAGES'] = Config.LANGUAGES
-app.config['BABEL_DEFAULT_LOCALE'] = 'en'
-app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
-app.url_map.strict_slashes = False
+app = Flask(__name__, template_folder='templates')
 babel = Babel(app)
+
+
+class Config(object):
+    '''
+        Babel configuration.
+    '''
+    LANGUAGES = ['en', 'fr']
+    BABEL_DEFAULT_LOCALE = 'en'
+    BABEL_DEFAULT_TIMEZONE = 'UTC'
+
+
+app.config.from_object(Config)
+
 users = {
     1: {"name": "Balou", "locale": "fr", "timezone": "Europe/Paris"},
     2: {"name": "Beyonce", "locale": "en", "timezone": "US/Central"},
@@ -25,57 +30,53 @@ users = {
 }
 
 
-def get_user(id=None):
-    """ Returns a user dictionary """
+def get_user() -> Union[dict, None]:
+    '''
+        Get user from session as per variable.
+    '''
     try:
-        return users.get(int(id), None)
+        login_as = request.args.get('login_as', None)
+        user = users[int(login_as)]
     except Exception:
-        return None
+        user = None
 
 
 @app.before_request
 def before_request():
-    """ Finds a user if any, and set it as a global on `flask.g.user` """
-    queries = request.query_string.decode('utf-8').split('&')
-    query_table = dict(map(
-        lambda x: (x if '=' in x else '=').split('='),
-        queries,
-    ))
-    login_id = query_table.get('login_as', '')
-    user = get_user(login_id)
-    setattr(g, 'user', user)
+    '''
+        Operations before request.
+    '''
+    user = get_user()
+    g.user = user
+
+
+@app.route('/', methods=['GET'], strict_slashes=False)
+def helloWorld() -> str:
+    '''
+        Render template for Babel usage.
+    '''
+    return render_template('6-index.html')
 
 
 @babel.localeselector
-def get_locale():
-    """ Forces locale """
-    queries = request.query_string.decode('utf-8').split('&')
-    query_table = dict(map(
-        lambda x: (x if '=' in x else '=').split('='),
-        queries,
-    ))
-    locale = query_table.get('locale', '')
-    if locale in app.config_class.LANGUAGES:
+def get_locale() -> str:
+    '''
+        Get user locale to serve matching translation.
+    '''
+    locale = request.args.get('locale')
+    if locale in app.config['LANGUAGES']:
         return locale
-    user_details = getattr(g, 'user', None)
-    if user_details is not None:
-        if user_details['locale'] in app.config_class.LANGUAGES:
-            return user_details['locale']
-    langs = re.split('[,;]', str(request.accept_languages))
-    for lang in langs:
-        if lang in app.config_class.LANGUAGES:
-            return lang
-    return app.config['BABEL_DEFAULT_LOCALE']
 
+    if g.user:
+        locale = g.user.get("locale")
+        if locale and locale in app.config['LANGUAGES']:
+            return locale
 
-@app.route('/')
-def index():
-    """ Renders `6-index` page """
-    user_details = getattr(g, 'user', None)
-    ctxt = {
-        'login_details': user_details,
-    }
-    return render_template('6-index.html', **ctxt)
+    locale = request.headers.get('locale')
+    if locale and locale in app.config['LANGUAGES']:
+        return locale
+
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
 if __name__ == '__main__':
