@@ -25,3 +25,19 @@ msgstr ""
 msgid "home_header"
 msgstr ""
 
+#: templates/5-index.py:5
+msgid "home_title"
+msgstr ""
+
+#: templates/5-index.py:8
+msgid "home_header"
+msgstr ""
+
+#: templates/5-index.py:10
+msgid "logged_in_as"
+msgstr ""
+
+#: templates/5-index.py:12
+msgid "not_logged_in"
+msgstr ""
+
