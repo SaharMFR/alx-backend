@@ -35,7 +35,8 @@ def get_user() -> Union[Dict, None]:
 @app.before_request
 def before_request() -> None:
     """ Finds a user if any, and set it as a global on `flask.g.user` """
-    g.user = get_user()
+    user = get_user()
+    g.user = user
 
 
 @babel.localeselector
